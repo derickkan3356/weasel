@@ -1,0 +1,67 @@
+name: Build x64
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - vram-software-render
+
+jobs:
+  build:
+    runs-on: windows-2022
+    env:
+      boost_version: 1.84.0
+      BOOST_ROOT: ${{ github.workspace }}\deps\boost_1_84_0
+    steps:
+      - name: Checkout last commit
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Configure build environment
+        shell: bash
+        run: cp env.vs2022.bat env.bat
+
+      - name: Cache Boost
+        id: cache-boost
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BOOST_ROOT }}
+          key: ${{ runner.os }}-vs2022-boost-${{ env.boost_version }}
+
+      - name: Install Boost
+        if: steps.cache-boost.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          ./install_boost.bat
+          ./build.bat boost
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      # The installed 0.17.4 ships librime 1.13.1; build against the same headers.
+      - name: Get Rime files
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\get-rime.ps1 -use dev -tag 1.13.1
+
+      - name: Build Weasel
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\build.bat weasel
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: weasel-output
+          if-no-files-found: error
+          path: |
+            output\**\*.exe
+            output\**\*.dll
+            output\**\*.ime

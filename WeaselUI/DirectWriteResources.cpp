@@ -43,7 +43,7 @@ DirectWriteResources::DirectWriteResources(weasel::UIStyle& style,
   const D2D1_PIXEL_FORMAT format = D2D1::PixelFormat(
       DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED);
   const D2D1_RENDER_TARGET_PROPERTIES properties =
-      D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, format);
+      D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_SOFTWARE, format);
   HR(pD2d1Factory->CreateDCRenderTarget(&properties, &pRenderTarget));
   pRenderTarget->SetTextAntialiasMode(mode);
   pRenderTarget->SetAntialiasMode(D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
